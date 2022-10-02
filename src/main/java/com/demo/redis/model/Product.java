@@ -9,13 +9,11 @@ import org.springframework.data.redis.core.RedisHash;
 import java.io.Serializable;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@RedisHash("ProductTest")
-public class Product implements Serializable {
+@RedisHash(value="cg:{product}",timeToLive = 60)
+public class Product {
     @Id
     private Integer id;
-
     private String name;
     private int quantity;
     private long price;
