@@ -1,5 +1,7 @@
 package com.demo.redis;
 
+import com.demo.redis.model.Product;
+import com.demo.redis.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
