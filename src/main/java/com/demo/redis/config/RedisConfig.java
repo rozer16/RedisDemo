@@ -1,15 +1,22 @@
 package com.demo.redis.config;
 
 import com.demo.redis.model.Product;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SslOptions;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.convert.KeyspaceConfiguration;
 import org.springframework.data.redis.core.convert.MappingConfiguration;
@@ -19,6 +26,7 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.io.File;
 import java.time.Duration;
 
 @Configuration
@@ -46,14 +54,92 @@ public class RedisConfig {
     @Value("${redis.timeout}")
     private long timeout;
 
+    @Value("${redis.username}")
+    private String username;
+
+    @Value("${redis.password}")
+    private String password;
+
+    @Value("${redis.sslKeystoreLocation}")
+    private String keyStoreLocation;
+
+    @Value("${redis.sslKeystorePassword}")
+    private String keyStorePasword;
+
+    @Value("${redis.sslTruststoreLocation}")
+    private String trustStoreLocation;
+
+    @Value("${redis.sslTruststorePassword}")
+    private String trustStorePasword;
+
+    @Value("${redis.isSslEnabled}")
+    private boolean isSslEnabled;
+
     @Bean
     public RedisStandaloneConfiguration redisStandaloneConfiguration() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host, port);
+        if(username != null && username.length() > 0 && password != null && password.length() > 0) {
+            redisStandaloneConfiguration.setUsername(username);
+            redisStandaloneConfiguration.setPassword(password);
+        }
         return redisStandaloneConfiguration;
 
     }
+    private SslOptions getSSLOption(){
+           return SslOptions.builder().
+                truststore(new File(trustStoreLocation),trustStorePasword)
+                .keystore(new File(keyStoreLocation),password.toCharArray())
+                .build();
+    }
 
     @Bean
+    public RedisConnectionFactory redisConnectionFactory(){
+        RedisStandaloneConfiguration configuration = redisStandaloneConfiguration();
+
+
+        GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+        poolConfig.setMaxTotal(100);
+        poolConfig.setMaxIdle(100);
+        poolConfig.setMinIdle(50);
+
+        poolConfig.setTestOnBorrow(false);
+        poolConfig.setTestOnCreate(false);
+        poolConfig.setTestOnReturn(false);
+        poolConfig.setTestWhileIdle(true);
+        poolConfig.setEvictorShutdownTimeout(Duration.ofMillis(-1));
+        poolConfig.setSoftMinEvictableIdleTime(Duration.ofMillis(-1));
+        poolConfig.setSoftMinEvictableIdleTime(Duration.ofMillis(-1));
+
+        poolConfig.setLifo(true);
+        poolConfig.setFairness(false);
+        poolConfig.setBlockWhenExhausted(true);
+        poolConfig.setMaxWait(Duration.ofMillis(-1));
+        poolConfig.setTimeBetweenEvictionRuns(Duration.ofMillis(1000));
+        poolConfig.setNumTestsPerEvictionRun(-5);
+
+        LettucePoolingClientConfiguration.LettucePoolingClientConfigurationBuilder
+                clientConfigurationBuilder =
+                LettucePoolingClientConfiguration.builder()
+                .commandTimeout(Duration.ofMillis(200))
+                .poolConfig(poolConfig);
+
+        ClientOptions.Builder clientOptionBuilder = ClientOptions.builder().autoReconnect(true);
+        if(isSslEnabled){
+            clientOptionBuilder = clientOptionBuilder.sslOptions(this.getSSLOption());
+            clientConfigurationBuilder = clientConfigurationBuilder.useSsl().and();
+        }
+
+        LettuceClientConfiguration clientConfiguration =
+                clientConfigurationBuilder.clientOptions(clientOptionBuilder.build()).build();
+        LettuceConnectionFactory connectionFactory =
+                new LettuceConnectionFactory(configuration,clientConfiguration);
+        connectionFactory.afterPropertiesSet();
+        return connectionFactory;
+
+
+    }
+
+    //@Bean
     public JedisConnectionFactory jedisConnectionFactory(){
         JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder= JedisClientConfiguration.builder();
         jedisClientConfigurationBuilder.connectTimeout(Duration.ofMillis(timeout));

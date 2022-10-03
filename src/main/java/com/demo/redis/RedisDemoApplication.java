@@ -11,6 +11,13 @@ import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import java.util.Arrays;
+import java.util.Map;
 
 @SpringBootApplication(exclude = {
         DataSourceAutoConfiguration.class,
@@ -22,7 +29,10 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 public class RedisDemoApplication implements CommandLineRunner {
 
     @Autowired
-    ProductService productService;
+    private RedisTemplate<byte[], byte[]> redisTemplate;
+
+    @Autowired
+    private ProductService productService;
 
 
     public static void main(String[] args) {
@@ -33,6 +43,11 @@ public class RedisDemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+
+        RedisConnection con = redisTemplate.getConnectionFactory().getConnection();
+        System.out.println(Arrays.toString(con.get("name".getBytes())));
+        System.out.println("=============");
+
         Product p = new Product();
         p.setId(4);
         p.setName("prod3");
