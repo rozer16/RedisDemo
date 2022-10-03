@@ -35,6 +35,9 @@ public class RedisConfig {
     @Value("${redis.hash}")
     private String hash;
 
+    @Value("${redis.keyspace}")
+    private String keyspace;
+
     @Value("${redis.timeToLive}")
     private long timeToLive;
 
@@ -76,7 +79,7 @@ public class RedisConfig {
     public KeyspaceConfiguration keyspaceConfiguration(){
         System.out.println("Hash is ==> "+hash+"_"+Product.class.getSimpleName());
         KeyspaceConfiguration kc = new KeyspaceConfiguration();
-        kc.addKeyspaceSettings(new KeyspaceConfiguration.KeyspaceSettings(Product.class, hash+"_"+Product.class.getSimpleName()));
+        kc.addKeyspaceSettings(new KeyspaceConfiguration.KeyspaceSettings(Product.class, getKey(Product.class.getSimpleName())));
         return kc;
     }
 
@@ -84,5 +87,17 @@ public class RedisConfig {
     public RedisMappingContext keyValueMappingContext(){
         System.out.println();
         return new RedisMappingContext(new MappingConfiguration(new IndexConfiguration(),keyspaceConfiguration()));
+    }
+
+
+    private String getKey(String className){
+        StringBuffer sb = new StringBuffer();
+        if(keyspace != null && keyspace.length()>0)
+                sb.append(keyspace);
+        if(hash != null && hash.length() > 0)
+            sb.append(hash+"_");
+        sb.append(className);
+        System.out.println("Key is ===> "+sb.toString());
+        return sb.toString();
     }
 }

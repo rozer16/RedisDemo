@@ -37,10 +37,17 @@ public class RedisDemoApplication implements CommandLineRunner {
         p.setQuantity(101);
         p.setPrice(10001);
         productRepository.save(p);
-        System.out.println("Product saved successfully!!");
+
         Product p1 = new Product();
-        p1.setId(3);
-        productRepository.delete(p1);
+        p1.setId(5);
+        p1.setName("prod4");
+        p1.setQuantity(101);
+        p1.setPrice(10001);
+        productRepository.save(p1);
+
+
+        System.out.println("Product saved successfully!!");
+
         System.out.println(productRepository.findAll());
 
 

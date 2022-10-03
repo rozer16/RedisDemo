@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-@RedisHash(value="cg:{product}",timeToLive = 60)
+@RedisHash//(value="cg:{product}",timeToLive = 60)
 public class Product {
     @Id
     private Integer id;
