@@ -1,6 +1,7 @@
 package com.demo.redis.config;
 
 import com.demo.redis.model.Product;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -24,6 +25,7 @@ import java.time.Duration;
 @EnableRedisRepositories
 @ComponentScan("com.demo.redis.repository")
 @PropertySource("classpath:env.properties")
+@Slf4j
 public class RedisConfig {
 
     @Value("${redis.host}")
@@ -77,7 +79,7 @@ public class RedisConfig {
 
     @Bean
     public KeyspaceConfiguration keyspaceConfiguration(){
-        System.out.println("Hash is ==> "+hash+"_"+Product.class.getSimpleName());
+        log.info("Hash is ==> "+hash+"_"+Product.class.getSimpleName());
         KeyspaceConfiguration kc = new KeyspaceConfiguration();
         kc.addKeyspaceSettings(new KeyspaceConfiguration.KeyspaceSettings(Product.class, getKey(Product.class.getSimpleName())));
         return kc;
@@ -85,7 +87,6 @@ public class RedisConfig {
 
     @Bean
     public RedisMappingContext keyValueMappingContext(){
-        System.out.println();
         return new RedisMappingContext(new MappingConfiguration(new IndexConfiguration(),keyspaceConfiguration()));
     }
 
@@ -97,7 +98,7 @@ public class RedisConfig {
         if(hash != null && hash.length() > 0)
             sb.append(hash+"_");
         sb.append(className);
-        System.out.println("Key is ===> "+sb.toString());
+        log.info("Key is ===> "+sb.toString());
         return sb.toString();
     }
 }
